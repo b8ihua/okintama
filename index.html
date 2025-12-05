@@ -74,9 +74,48 @@
   width: 100% !important;
   height: 100% !important;
 }
+
+/* ポップアップの背景 */
+.popup {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+/* ポップアップのボックス */
+.popup-content {
+  background: white;
+  padding: 20px 30px;
+  border-radius: 10px;
+  text-align: center;
+  font-size: 20px;
+}
+
+/* ボタン */
+#startBtn {
+  margin-top: 15px;
+  padding: 10px 20px;
+  font-size: 18px;
+  cursor: pointer;
+}
+
 </style>
 </head>
 <body>
+  <div id="popup" class="popup">
+  <div class="popup-content">
+    <p>稽古を開始します</p>
+    <p style="color:gray; font-size: 15px;">※BGM，SEが流れます。</p>
+    <button id="startBtn">対局開始</button>
+  </div>
+</div>
 <div class="wrap">
   <image src="https://b8ihua.github.io/okintama/無題1474_20251205164025.png" width="50%" style="padding:10px;">
   <div class="flex">
@@ -144,7 +183,25 @@
   </div>
 </div>
 <div class="log" id="log"></div>
+
+
 <script>
+
+window.onload = () => {
+  const popup = document.getElementById("popup");
+  const bgm = document.getElementById("bgm");
+  const startBtn = document.getElementById("startBtn");
+
+  startBtn.addEventListener("click", () => {
+    // BGM再生（ユーザー操作必須）
+    bgm.loop = true;
+    bgm.play();
+
+    // ポップアップを消す
+    popup.style.display = "none";
+  });
+};
+
 
 const IMG_BASE = "https://b8ihua.github.io/okintama/";
 
@@ -270,6 +327,14 @@ if(state.holder === 'player'){
   }
 }
 
+function playSE(id) {
+  const se = document.getElementById(id);
+  if (se) {
+    se.currentTime = 0;
+    se.play();
+  }
+}
+
 // ルール：可能手
 function legalMoves(token){
   const moves = [];
@@ -369,6 +434,8 @@ function onOperationClick(actionKey){
 }
 
 function onWordClick(word, btnElement){
+  playSE(`se_${word}`);
+
   if(state.mode !== 'awaitNaming') return;
   // prevent clicking same button multiple times? allowed — user may press any
   currentSelection.push(word);
@@ -463,10 +530,23 @@ function displayNameForLog(t){
 }
 
 // UI wiring
-el.btn_su.addEventListener('click', ()=> onOperationClick('su'));
-el.btn_kyu.addEventListener('click', ()=> onOperationClick('kyu'));
-el.btn_gyu.addEventListener('click', ()=> onOperationClick('gyu'));
-el.btn_ju.addEventListener('click', ()=> onOperationClick('ju'));
+el.btn_su.addEventListener('click', ()=> {
+  playSE("se_su");
+
+  onOperationClick("su");
+});
+el.btn_kyu.addEventListener('click', ()=> {
+  playSE("se_kyu");
+  onOperationClick("kyu");
+});
+el.btn_gyu.addEventListener('click', ()=> {
+  playSE("se_gyu");
+  onOperationClick("gyu");
+});
+el.btn_ju.addEventListener('click', ()=> {
+  playSE("se_ju");
+  onOperationClick("ju");
+});
 
 el.btn_reset.addEventListener('click', ()=> {
   state.token = {kind:'normal', level:1};
@@ -501,5 +581,17 @@ render();
 log('ゲーム開始 — あなたからスタートです。操作を選んでください（すっ／きゅっ／ぎゅっ／じゅっ）。');
 
 </script>
+<audio id="se_su" src="https://b8ihua.github.io/okintama/す.wav"></audio>
+<audio id="se_kyu" src="https://b8ihua.github.io/okintama/きゅ.wav"></audio>
+<audio id="se_gyu" src="https://b8ihua.github.io/okintama/ぎゅ.wav"></audio>
+<audio id="se_ju" src="https://b8ihua.github.io/okintama/じゅ.wav"></audio>
+<audio id="se_お金玉" src="https://b8ihua.github.io/okintama/おきんたま.wav"></audio>
+<audio id="se_焼きん玉" src="https://b8ihua.github.io/okintama/焼きん玉.wav"></audio>
+<audio id="se_スーパー" src="https://b8ihua.github.io/okintama/スーパー.wav"></audio>
+<audio id="se_ハイパー" src="https://b8ihua.github.io/okintama/ハイパー.wav"></audio>
+<audio id="se_エキストラ" src="https://b8ihua.github.io/okintama/エキストラ.wav"></audio>
+<audio id="se_ウルトラ" src="https://b8ihua.github.io/okintama/ウルトラ.wav"></audio>
+<audio id="se_握り" src="https://b8ihua.github.io/okintama/にぎり.wav"></audio>
+<audio id="bgm" autoplay loop src="https://b8ihua.github.io/okintama/bgm.mp3"></audio>
 </body>
 </html>

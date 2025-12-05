@@ -29,8 +29,8 @@
   button:disabled{opacity:0.45;cursor:not-allowed}
   .btn-primary{background:#1b74ff;color:#fff;border-color:#175fd6}
   .btn-danger{background:#ff5b5b;color:#fff;border-color:#e14a4a}
-  .log{margin-top:14px;height:220px;overflow:auto;padding:12px;border-radius:8px;background:#fafafa;border:1px solid #eee;font-size:13px}
-  .small{font-size:30px;color:white;margin-top:8px}
+  .log{margin:14px;height:220px;overflow:auto;padding:12px;border-radius:8px;color:gray;;font-size:13px}
+  .small{font-size:30px;color:white;margin-top:35px}
   .wordGrid{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
   .wordBtn{padding:8px 10px;border-radius:8px;border:1px solid #ddd;background:#fff;cursor:pointer}
   .wordBtn.disabled{opacity:0.45;cursor:not-allowed}
@@ -147,7 +147,7 @@
     </div>
   </div>
 </div>
-
+<div class="log" id="log"></div>
 <script>
 /* 状態管理とルール（前回の合意仕様に準拠）
 state.token: { kind: 'normal'|'grip'|'baked', level: 0..5 }
@@ -351,7 +351,7 @@ function onWordClick(word, btnElement){
     log(`不正解：選択 "${currentSelection.join(' → ')}" は期待 "${currentExpected.join(' → ')}" と一致しません。ゲーム終了。`);
     state.mode = 'gameover';
     render();
-    alert('不正解です。ゲームオーバー。リセットしてください。');
+    alert('ゲームオーバー お金玉の扱いは優しく正しく美しく');
     return;
   }
   // if reached expected length -> correct

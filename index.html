@@ -380,21 +380,6 @@ function startTurnTimer() {
 
 
 
-function fadeOutAudio(audio, duration = 1000) {
-  const step = 50;
-  const volumeStep = audio.volume / (duration / step);
-
-  const fade = setInterval(() => {
-    if (audio.volume > 0.01) {
-      audio.volume -= volumeStep;
-    } else {
-      audio.volume = 0;
-      audio.pause();
-      audio.currentTime = 0;
-      clearInterval(fade);
-    }
-  }, step);
-}
 
 window.onload = () => {
   const popup1 = document.getElementById("popup1");
@@ -457,6 +442,8 @@ if (timeupCloseBtn) timeupCloseBtn.addEventListener("click", () => {
     si.pause();
     si.currentTime = 0;
     si.volume = 1; // 元の音量に戻す
+    titlebgm.pause();          // 再生停止
+    titlebgm.currentTime = 0;  // 巻き戻し（消音と同じ効果）
       state.token = {kind:'normal', level:1};
   state.holder = 'player';
   state.turn = 0;
@@ -469,7 +456,7 @@ if (timeupCloseBtn) timeupCloseBtn.addEventListener("click", () => {
   document.getElementById("timeupPopup").style.display = "none";
   render();
 
-    fadeOutAudio(titlebgm, 1000);
+
 
     popup1.style.display = "none";   // popup1 を閉じる
   });

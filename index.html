@@ -1,0 +1,476 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Yuji+Syuku&display=swap" rel="stylesheet">
+<title>お金玉道場</title>
+<style>
+  :root{--bg:#110F0D;--card:#fff;--muted:#666}
+  body{font-family:Yuji Syuku,system-ui,-apple-system,Segoe UI,Roboto,"Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;background:var(--bg);padding:0px; margin:0px;}
+  .wrap{width:100%; margin:0 auto;padding:0px;}
+  h1{margin:0 0 8px;font-size:20px; text-align:center;}
+  .flex{display:flex;gap:0px;align-items:flex-start}
+  .panel{flex:1;padding:14px;border-radius:0px;background:#fff;border:1px solid #eef2fb}
+  .side{width:280px}
+  .tokenVisual{width:120px;height:120px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;margin-right:12px}
+  .row{display:flex;align-items:center;flex-direction: column;text-align:center;}
+  .level0{background:#dfe6df;border:3px solid #c5d6bf}
+  .level1{background:#fff7e6;border:3px solid #ffd67a}
+  .level2{background:#e6f7ff;border:3px solid #9fe0ff}
+  .level3{background:#f0e6ff;border:3px solid #caa7ff}
+  .level4{background:#ffeef6;border:3px solid #ffb7dd}
+  .level5{background:#fff0e6;border:3px solid #ffb87a}
+  .baked{box-shadow:0 0 0 6px rgba(255,0,0,0.03) inset}
+  .controls{margin-top:12px;display:flex;gap:8px; }
+  button{padding:10px 12px;border-radius:8px;border:1px solid #d0d7e6;background:#fff;cursor:pointer}
+  button:disabled{opacity:0.45;cursor:not-allowed}
+  .btn-primary{background:#1b74ff;color:#fff;border-color:#175fd6}
+  .btn-danger{background:#ff5b5b;color:#fff;border-color:#e14a4a}
+  .log{margin-top:14px;height:220px;overflow:auto;padding:12px;border-radius:8px;background:#fafafa;border:1px solid #eee;font-size:13px}
+  .small{font-size:30px;color:white;margin-top:8px}
+  .wordGrid{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  .wordBtn{padding:8px 10px;border-radius:8px;border:1px solid #ddd;background:#fff;cursor:pointer}
+  .wordBtn.disabled{opacity:0.45;cursor:not-allowed}
+  .status{margin-top:8px;font-weight:700}
+  .tag{font-size:13px;color:#fff;background:#666;padding:6px 8px;border-radius:6px}
+  .center{text-align:center}
+  @media (max-width:720px){.flex{flex-direction:column}.side{width:100%}}
+
+.tokenPlayerTurn {
+  transform: translateY(22px);
+  transition: transform 1s ease;
+}
+.tokenBotTurn {
+  transform: translateY(-22px);
+  transition: transform 1s ease;
+}
+.wordBtn {
+  border: none !important;
+  background: transparent !important;
+  padding: 0 !important;
+
+}
+
+.imgBtn {
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+.imgBtn img {
+  width: 10%;
+  object-fit: contain;
+  pointer-events: none; /* img がクリックを邪魔しない */
+}
+.wordGrid {
+  display:flex; flex-direction:row; gap:0px;
+}
+
+.imgBtn {
+  width: 13.6%;
+  margin:1px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.imgBtn img {
+  width: 100% !important;
+  height: 100% !important;
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <image src="https://b8ihua.github.io/okintama/無題1474_20251205164025.png" width="50%" style="padding:10px;">
+  <div class="flex">
+    <div>
+      <div class="row">
+<img src="https://b8ihua.github.io/okintama/2CE7E60D-4DE8-4EB6-8E9D-F2EF527A6D63.jpeg" width="100%" style="position: absolute;">
+
+<img src="https://b8ihua.github.io/okintama/無題1472_20251205142450.png" width="100%" style="position: relative; top:240px; z-index:1;">
+
+        <div id="visual" class="tokenVisual level1" style="margin-top:-50px;">お金玉</div>
+        <div style="margin-top:50px; z-index:10;">
+          <div><strong id="holder">プレイヤー</strong></div>
+          <div id="stateText" class="status">お金玉（レベル1）</div>
+          <div id="desc" >説明がここに表示されます。</div>
+        </div>
+      </div>
+
+      <div id="operationArea" class="controls" style="margin-top:40px; display:flex; flex-direction:row; gap:0px;">
+        <button id="btn_su" style=" padding: 0;
+  border: none;background: transparent;"><img src="https://b8ihua.github.io/okintama/su.PNG" style="width: 100%;object-fit: contain;pointer-events: none;"></button>
+        <button id="btn_kyu"style=" padding: 0;
+  border: none;background: transparent;"><img src="https://b8ihua.github.io/okintama/kyu.PNG" style="width: 100%;object-fit: contain;pointer-events: none;"></button>
+        <button id="btn_gyu"style=" padding: 0;
+  border: none;background: transparent;"><img src="https://b8ihua.github.io/okintama/gyu.PNG" style="width: 100%;object-fit: contain;pointer-events: none;"></button>
+        <button id="btn_ju"style=" padding: 0;
+  border: none;background: transparent;"><img src="https://b8ihua.github.io/okintama/ju.PNG" style="width: 100%;object-fit: contain;pointer-events: none;"></button>
+      </div>
+
+      <div id="namingArea" style="display:none">
+        <div class="small"></div>
+<div class="small" style="margin-top:8px; text-align:center;"><span id="selectedWords">—</span></div>
+        <div class="wordGrid" id="wordGrid">
+          <!-- 単語ボタン群 -->
+        </div>
+        
+        <div style="margin-top:10px">
+          <button id="btn_cancel" class="btn-danger">キャンセル（操作取り消し）</button>
+        </div>
+      </div>
+
+      
+      
+    </div>
+
+    <div class="side">
+      <div style="padding:12px;margin:10px;border-radius:8px;color:white;background:#110F0D;border:1px solid #eee">
+        <div style="font-weight:700;margin-bottom:8px">情報</div>
+        <div>ターン（あなたの手数）：<span id="turn">0</span></div>
+        <div style="margin-top:6px">直近アクション：<span id="lastAction">—</span></div>
+        <div style="margin-top:10px">現在状態：
+          <div id="stateShort" style="font-weight:700;margin-top:6px">お金玉（Lv1）</div>
+        </div>
+      </div>
+
+      <div style="margin-top:12px" class="center">
+        <button id="btn_reset" class="btn-danger" style="width:100%">リセット</button>
+      </div>
+
+      <div style="margin-top:12px">
+     
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* 状態管理とルール（前回の合意仕様に準拠）
+state.token: { kind: 'normal'|'grip'|'baked', level: 0..5 }
+level names: 0:握り,1:お金玉,2:スーパー,3:ハイパー,4:エキストラ,5:ウルトラ
+命名ルール（結果のトークンに対する期待語列）：
+ - grip (level0) -> ['握り','お金玉'] (2語)
+ - normal level1 -> ['お金玉'] (1語)
+ - normal level>=2 -> [levelWord,'お金玉'] (2語)
+ - baked any level -> [levelWord,'焼きん玉'] (2語)
+*/
+
+const LEVEL_WORDS = {0:'握り',1:'お金玉',2:'スーパー',3:'ハイパー',4:'エキストラ',5:'ウルトラ'};
+const WORDS = ['握り','お金玉','スーパー','ハイパー','エキストラ','ウルトラ','焼きん玉'];
+
+let state = {
+  token: { kind:'normal', level:1 },
+  holder: 'player', // 'player' or 'bot'
+  turn: 0,
+  mode: 'idle' // 'idle' | 'awaitNaming' | 'gameover'
+};
+
+// DOM
+const el = {
+  visual: document.getElementById('visual'),
+  holder: document.getElementById('holder'),
+  stateText: document.getElementById('stateText'),
+  desc: document.getElementById('desc'),
+  stateShort: document.getElementById('stateShort'),
+  turn: document.getElementById('turn'),
+  lastAction: document.getElementById('lastAction'),
+  log: document.getElementById('log'),
+  btn_su: document.getElementById('btn_su'),
+  btn_kyu: document.getElementById('btn_kyu'),
+  btn_gyu: document.getElementById('btn_gyu'),
+  btn_ju: document.getElementById('btn_ju'),
+  btn_reset: document.getElementById('btn_reset'),
+  operationArea: document.getElementById('operationArea'),
+  namingArea: document.getElementById('namingArea'),
+  wordGrid: document.getElementById('wordGrid'),
+  selectedWords: document.getElementById('selectedWords'),
+  btn_cancel: document.getElementById('btn_cancel')
+};
+
+function log(msg){
+  const p = document.createElement('div'); p.textContent = msg; el.log.appendChild(p); el.log.scrollTop = el.log.scrollHeight;
+}
+
+function tokenDisplayName(t){
+  if(t.kind === 'grip') return '握りお金玉';
+  if(t.kind === 'baked') return `${LEVEL_WORDS[t.level]}（焼きん玉）`;
+  return `${LEVEL_WORDS[t.level]}${t.level===1 ? '' : 'お金玉'}`.replace('1','');
+}
+
+function render(){
+  const t = state.token;
+  el.holder.textContent = state.holder === 'player' ? 'あなたのターン' : 'Botのターン';
+  el.turn.textContent = state.turn;
+  el.stateShort.textContent = (t.kind === 'grip' ? '握りお金玉' : t.kind === 'baked' ? LEVEL_WORDS[t.level]+'（焼きん玉）' : LEVEL_WORDS[t.level] + (t.level===1 ? '（お金玉）' : '（お金玉）'));
+  // visual classes
+  el.visual.className = 'tokenVisual';
+// トークン位置（ターンによる上下移動）
+if(state.holder === 'player'){
+  el.visual.classList.add('tokenPlayerTurn');
+} else {
+  el.visual.classList.add('tokenBotTurn');
+}
+  let levelIndex = (t.kind === 'grip') ? 0 : t.level;
+  el.visual.classList.add('level' + levelIndex);
+  if(t.kind === 'baked') el.visual.classList.add('baked');
+  el.visual.textContent = (t.kind==='grip') ? '握りお金玉' : (t.kind==='baked' ? LEVEL_WORDS[t.level]+' 焼き' : LEVEL_WORDS[t.level] + (t.level===1 ? '': 'お金玉'));
+  el.stateText.textContent = (t.kind==='grip') ? '握りお金玉（Lv0）' : (t.kind==='baked') ? `${LEVEL_WORDS[t.level]} 焼きん玉（Lv${t.level}）` : `${LEVEL_WORDS[t.level]}（Lv${t.level}）`;
+  el.desc.textContent = `種別: ${t.kind} ／ レベル: ${t.level}`;
+  // operation buttons enabled only when player's turn and idle
+  const playerTurn = state.holder === 'player' && state.mode === 'idle';
+  el.btn_su.disabled = !playerTurn || !legalMoves(state.token).includes('su');
+  el.btn_kyu.disabled = !playerTurn || !legalMoves(state.token).includes('kyu');
+  el.btn_gyu.disabled = !playerTurn || !legalMoves(state.token).includes('gyu');
+  el.btn_ju.disabled = !playerTurn || !legalMoves(state.token).includes('ju');
+  // naming area visibility
+  if(state.mode === 'awaitNaming'){
+    el.operationArea.style.display = 'none';
+    el.namingArea.style.display = 'block';
+  } else {
+    el.operationArea.style.display = 'flex';
+    el.namingArea.style.display = 'none';
+    el.selectedWords.textContent = '—';
+  }
+  if(state.mode === 'gameover'){
+    el.operationArea.style.display = 'none';
+    el.namingArea.style.display = 'none';
+  }
+}
+
+// ルール：可能手
+function legalMoves(token){
+  const moves = [];
+  moves.push('su');
+  if(token.kind === 'grip') moves.push('kyu');
+  else if(token.kind === 'normal'){
+    if(token.level < 5) moves.push('kyu');
+  } else if(token.kind === 'baked'){
+    if(token.level - 1 >= 1) moves.push('kyu');
+  }
+  if(!(token.kind === 'grip')) moves.push('gyu');
+  if(token.kind === 'normal' && token.level >= 2) moves.push('ju');
+  return moves;
+}
+
+// action simulators (do not commit)
+function simulateAction(token, actionKey){
+  const before = {...token};
+  if(actionKey === 'su') return {...before};
+  if(actionKey === 'kyu'){
+    if(before.kind === 'grip') return {kind:'normal', level:1};
+    if(before.kind === 'normal'){
+      if(before.level >=5) throw 'illegal';
+      return {kind:'normal', level: before.level + 1};
+    }
+    if(before.kind === 'baked'){
+      return {kind:'normal', level: before.level - 1};
+    }
+  }
+  if(actionKey === 'gyu'){
+    return {kind:'grip', level:0};
+  }
+  if(actionKey === 'ju'){
+    if(before.kind === 'normal' && before.level >=2) return {kind:'baked', level: before.level};
+    throw 'illegal';
+  }
+  return before;
+}
+
+// 命名期待配列を作る（結果トークンに対して）
+function expectedNameSequenceForToken(token){
+  if(token.kind === 'grip') return ['握り','お金玉'];
+  if(token.kind === 'normal'){
+    if(token.level === 1) return ['お金玉'];
+    return [LEVEL_WORDS[token.level],'お金玉'];
+  }
+  if(token.kind === 'baked'){
+    return [LEVEL_WORDS[token.level],'焼きん玉'];
+  }
+  return [];
+}
+
+// UI: 単語ボタン生成
+function buildWordButtons(){
+  el.wordGrid.innerHTML = '';
+  for(const w of WORDS){
+    const btn = document.createElement('button');
+    btn.className = 'wordBtn imgBtn';   // 画像ボタンクラスを併用
+
+    // 画像作成
+    const img = document.createElement('img');
+    // 画像ファイル名のルールは適宜変更
+    img.src = `https://b8ihua.github.io/okintama/${w}.PNG`;
+    img.alt = w;
+
+    btn.appendChild(img);
+
+    btn.addEventListener('click', ()=> onWordClick(w, btn));
+    el.wordGrid.appendChild(btn);
+  }
+}
+// 現在の選択語配列
+let currentSelection = [];
+let currentExpected = null;
+let pendingAction = null; // { actionKey, resultToken }
+
+function onOperationClick(actionKey){
+  if(state.mode !== 'idle' || state.holder !== 'player') return;
+  // legal?
+  if(!legalMoves(state.token).includes(actionKey)) { log('その操作は現在できません。'); return; }
+  // simulate
+  const result = simulateAction(state.token, actionKey);
+  // expected naming sequence
+  const expected = expectedNameSequenceForToken(result);
+  // set pending
+  pendingAction = {actionKey, resultToken: result};
+  currentSelection = [];
+  currentExpected = expected;
+  state.mode = 'awaitNaming';
+  render();
+  buildWordButtons();
+  log(`あなたが「${actionLabel(actionKey)}」を選択しました。名前を選んでください（必要語数: ${expected.length}）。`);
+  // If expected length is 0 (shouldn't happen), auto commit
+  if(expected.length === 0){
+    commitPendingAction();
+  }
+}
+
+function onWordClick(word, btnElement){
+  if(state.mode !== 'awaitNaming') return;
+  // prevent clicking same button multiple times? allowed — user may press any
+  currentSelection.push(word);
+  el.selectedWords.textContent = currentSelection.join(' → ');
+  // check prefix correctness: selected must match expected prefix
+  const prefixOk = currentSelection.every((v,i)=> v === currentExpected[i]);
+  if(!prefixOk){
+    // wrong -> game over
+    log(`不正解：選択 "${currentSelection.join(' → ')}" は期待 "${currentExpected.join(' → ')}" と一致しません。ゲーム終了。`);
+    state.mode = 'gameover';
+    render();
+    alert('不正解です。ゲームオーバー。リセットしてください。');
+    return;
+  }
+  // if reached expected length -> correct
+  if(currentSelection.length === currentExpected.length){
+    // success: commit pending action
+    log(`正解！「${currentSelection.join(' → ')}」が正しい名称です。Bot のターンへ。`);
+    commitPendingAction();
+  }
+}
+
+function commitPendingAction(){
+  if(!pendingAction) return;
+  // apply change
+  state.token = pendingAction.resultToken;
+  state.lastAction = `${state.holder === 'player' ? 'あなた' : 'Bot'}：${actionLabel(pendingAction.actionKey)}`;
+  el.lastAction.textContent = state.lastAction;
+  // advance turn count only when player completed their operation
+  if(state.holder === 'player') state.turn += 1;
+  // pass to opponent
+  state.holder = (state.holder === 'player') ? 'bot' : 'player';
+  // clear pending
+  pendingAction = null;
+  currentSelection = [];
+  currentExpected = null;
+  state.mode = 'idle';
+  render();
+  // bot move if it's bot's turn
+  if(state.holder === 'bot') {
+    setTimeout(botMove, 1000);
+  }
+}
+
+// action label
+function actionLabel(k){
+  if(k==='su') return 'すっ';
+  if(k==='kyu') return 'きゅっ';
+  if(k==='gyu') return 'ぎゅっ';
+  if(k==='ju') return 'じゅっ';
+  return k;
+}
+
+// Bot logic: same as前回。Bot の操作は即コミット（命名クイズなし）
+function botMove(){
+  if(state.holder !== 'bot' || state.mode !== 'idle') return;
+  const legal = legalMoves(state.token);
+  let choice = null;
+  if(state.token.kind === 'normal' && state.token.level < 5 && legal.includes('kyu')){
+    choice = 'kyu';
+  } else if(state.token.kind === 'baked' && legal.includes('kyu')){
+    choice = 'kyu';
+  } else {
+    const weights = [];
+    for(const a of legal){
+      let w = 1;
+      if(a === 'gyu') w = 0.9;
+      if(a === 'ju') w = 0.8;
+      if(a === 'su') w = 1.0;
+      if(a === 'kyu') w = 1.4;
+      weights.push(w);
+    }
+    const sum = weights.reduce((s,x)=>s+x,0);
+    let r = Math.random()*sum;
+    for(let i=0;i<legal.length;i++){ r -= weights[i]; if(r <= 0){ choice = legal[i]; break; } }
+    if(!choice) choice = legal[Math.floor(Math.random()*legal.length)];
+  }
+  // simulate & commit immediately
+  const result = simulateAction(state.token, choice);
+  state.token = result;
+  el.lastAction.textContent = `Bot：${actionLabel(choice)}`;
+  log(`Bot が「${actionLabel(choice)}」を実行。 → ${displayNameForLog(result)}`);
+  // pass back to player
+  state.holder = 'player';
+  render();
+}
+
+function displayNameForLog(t){
+  if(t.kind === 'grip') return '握りお金玉';
+  if(t.kind === 'baked') return `${LEVEL_WORDS[t.level]}（焼きん玉）`;
+  return `${LEVEL_WORDS[t.level]}（お金玉）`;
+}
+
+// UI wiring
+el.btn_su.addEventListener('click', ()=> onOperationClick('su'));
+el.btn_kyu.addEventListener('click', ()=> onOperationClick('kyu'));
+el.btn_gyu.addEventListener('click', ()=> onOperationClick('gyu'));
+el.btn_ju.addEventListener('click', ()=> onOperationClick('ju'));
+
+el.btn_reset.addEventListener('click', ()=> {
+  state.token = {kind:'normal', level:1};
+  state.holder = 'player';
+  state.turn = 0;
+  state.mode = 'idle';
+  pendingAction = null;
+  currentSelection = [];
+  currentExpected = null;
+  el.log.innerHTML = '';
+  el.lastAction.textContent = '—';
+  render();
+  log('ゲームをリセットしました。あなたからスタートです。');
+});
+
+el.btn_cancel.addEventListener('click', ()=> {
+  // cancel pending naming
+  if(state.mode !== 'awaitNaming') return;
+  pendingAction = null;
+  currentSelection = [];
+  currentExpected = null;
+  state.mode = 'idle';
+  render();
+  log('操作をキャンセルしました。');
+});
+
+// build word buttons initially
+buildWordButtons();
+
+// initial render and intro
+render();
+log('ゲーム開始 — あなたからスタートです。操作を選んでください（すっ／きゅっ／ぎゅっ／じゅっ）。');
+
+</script>
+</body>
+</html>

@@ -91,9 +91,10 @@
 
 /* ポップアップのボックス */
 .popup-content {
-  background: white;
+  background-image: url('https://b8ihua.github.io/okintama/bg.jpeg');
+  width:100%;
+  height:100%;
   padding: 20px 30px;
-  border-radius: 10px;
   text-align: center;
   font-size: 20px;
 }
@@ -106,14 +107,52 @@
   cursor: pointer;
 }
 
+/* 一番上に来る popup2 */
+.popup-top {
+  z-index: 10000; /* popup1 より上にする */
+}
+
+#timeBarContainer {
+  width: 95%;
+  height: 15px;
+  background: #444;
+  border-radius: 5px;
+  margin: -20px 10px;
+  overflow: hidden;
+}
+
+#timeBar {
+  width: 100%;
+  height: 100%;
+  background: #e7e1d4;
+  transition: width 0.05s linear;
+}
+
+/* モーダル内の箱を中央に小さく表示するための微調整（popup-content を上書きしないようクラスで） */
+.timeup-box {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  color: #111;
+  font-family: inherit;
+}
+
 </style>
 </head>
 <body>
-  <div id="popup" class="popup">
+  <div id="popup1" class="popup">
   <div class="popup-content">
+    <image src="https://b8ihua.github.io/okintama/logo.png" width="100%" style="padding:10px;"></image>
     <p>稽古を開始します</p>
     <p style="color:gray; font-size: 15px;">※BGM，SEが流れます。</p>
     <button id="startBtn">対局開始</button>
+  </div>
+</div>
+<div id="popup2" class="popup popup-top">
+  <div class="popup-content" style="background:white; width:70%; height:19%; border-radius: 10px; padding:10px; font-size:17px;">
+    <p>BGM・効果音が再生されます。<br>音量にご注意ください。</p>
+    <button id="closePopup2" style="width:30%;">閉じる</button>
   </div>
 </div>
 <div class="wrap">
@@ -130,11 +169,13 @@
 </div>
         <div style="margin-top:10px; z-index:10;">
           <div><strong id="holder">プレイヤー</strong></div>
-          <div id="stateText" class="status">お金玉（レベル1）</div>
-          <div id="desc" >説明がここに表示されます。</div>
+          <div id="stateText" class="status" style="font-size:35px; margin-top:0;">お金玉（レベル1）</div>
         </div>
       </div>
-
+<br><br><br>
+<div id="timeBarContainer">
+  <div id="timeBar"></div>
+</div>
       <div id="operationArea" class="controls" style="margin-top:40px; display:flex; flex-direction:row; gap:0px;">
         <button id="btn_su" style=" padding: 0;
   border: none;background: transparent;"><img src="https://b8ihua.github.io/okintama/su.PNG" style="width: 100%;object-fit: contain;pointer-events: none;"></button>
@@ -183,24 +224,257 @@
   </div>
 </div>
 <div class="log" id="log"></div>
+<!-- 時間切れモーダル（最初は非表示） -->
+<div id="timeupPopup" class="popup" style="display:none; z-index:8000;">
+  <div class="popup-content timeup-box" style="background:white; width:320px; height:auto; border-radius:10px; padding:18px; box-sizing:border-box;">
+    <h2 style="margin:0 0 8px;">時間切れ</h2>
+    <p style="margin:0 0 12px;">あまりに遅いので<br>お金玉は腐りました。</p>
+    <div style="display:flex; gap:8px; justify-content:center;">
+      <button id="timeupRetry" style="padding:8px 12px; border-radius:8px;">リトライ</button>
+      <button id="timeupClose" style="padding:8px 12px; border-radius:8px;">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<div id="gameOverModal" class="modal">
+  <div class="modal-content">
+    <p id="gameOverMessage">ゲームオーバー</p>
+        <h2 style="margin:0 0 8px;">誤磨き</h2>
+    <p style="margin:0 0 12px;">お金玉の扱いは<br>優しく正しく美しく</p>
+    <button id="gameOverClose">OK</button>
+  </div>
+</div>
+
+<style>
+.modal {
+  display: none;
+  z-index:8001;
+  position: fixed;
+  left: 0; top: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.5);
+}
+.modal-content {
+  background: white;
+  padding: 20px;
+  width: 70%;
+  max-width: 300px;
+  margin: 150px auto;
+  border-radius: 10px;
+  text-align: center;
+}
+</style>
 
 
 <script>
 
-window.onload = () => {
-  const popup = document.getElementById("popup");
-  const bgm = document.getElementById("bgm");
-  const startBtn = document.getElementById("startBtn");
+function render(){
+  const t = state.token;
+  el.holder.textContent = state.holder === 'player' ? 'あなたのターン' : 'Botのターン';
+  el.turn.textContent = state.turn;
 
+  // ★ ここを tokenDisplayName に変更！
+  el.stateShort.textContent = tokenDisplayName(t);
+
+  // visual classes
+  el.visual.className = 'tokenVisual';
+
+
+// 画像切替
+const img = document.getElementById("tokenImg");
+if (t.kind === "grip") {
+  img.src = TOKEN_IMAGES.grip;
+} else if (t.kind === "baked") {
+  img.src = TOKEN_IMAGES.baked[t.level];
+} else {
+  img.src = TOKEN_IMAGES.normal[t.level];
+}
+
+// トークン位置（ターンによる上下移動）
+if(state.holder === 'player'){
+  
+  el.visual.classList.add('tokenPlayerTurn');
+} else {
+  el.visual.classList.add('tokenBotTurn');
+}
+  let levelIndex = (t.kind === 'grip') ? 0 : t.level;
+  el.visual.classList.add('level' + levelIndex);
+  if(t.kind === 'baked') el.visual.classList.add('baked');
+
+
+  
+el.stateText.textContent = tokenDisplayName(t);
+  // operation buttons enabled only when player's turn and idle
+  const playerTurn = state.holder === 'player' && state.mode === 'idle';
+  el.btn_su.disabled = !playerTurn || !legalMoves(state.token).includes('su');
+  el.btn_kyu.disabled = !playerTurn || !legalMoves(state.token).includes('kyu');
+  el.btn_gyu.disabled = !playerTurn || !legalMoves(state.token).includes('gyu');
+  el.btn_ju.disabled = !playerTurn || !legalMoves(state.token).includes('ju');
+  // naming area visibility
+  if(state.mode === 'awaitNaming'){
+    el.operationArea.style.display = 'none';
+    el.namingArea.style.display = 'block';
+  } else {
+    el.operationArea.style.display = 'flex';
+    el.namingArea.style.display = 'none';
+    el.selectedWords.textContent = '—';
+  }
+  if(state.mode === 'gameover'){
+    el.operationArea.style.display = 'none';
+    el.namingArea.style.display = 'none';
+  }
+
+  if (state.holder === 'player' && state.mode === 'idle') {
+    startTurnTimer();
+}
+}
+let turnTimer = null;
+const TURN_LIMIT = 10000;  // 10秒
+
+
+function startTurnTimer() {
+    // 既存のタイマーをクリア（多重起動防止）
+    clearTimeout(turnTimer);
+
+    const total = TURN_LIMIT;
+    const start = Date.now();
+
+    // ensure bar visible at start
+    const bar = document.getElementById("timeBar");
+    if (bar) bar.style.width = "100%";
+
+    function tick() {
+      const chin = document.getElementById("chin");
+            const si = document.getElementById("si");
+        const elapsed = Date.now() - start;
+        const remaining = Math.max(0, total - elapsed);
+
+        // 残り時間バーを更新
+        const ratio = remaining / total;
+        if (bar) bar.style.width = (ratio * 100) + "%";
+
+        if (remaining <= 0) {
+            // 完全停止して確実に一度だけ処理する
+            clearTimeout(turnTimer);
+            chin.play();
+
+            // ゲーム状態をゲームオーバーにする（内部状態）
+            state.mode = 'gameover';
+            render();
+
+            // ゲージを0にする（念のため）
+            if (bar) bar.style.width = "0%";
+
+            // 自前モーダルを表示（alert より確実）
+            const popup = document.getElementById("timeupPopup");
+            if (popup) popup.style.display = "flex";
+            return; // tick を再登録しない
+        } else {
+            // 30msごとに更新
+            turnTimer = setTimeout(tick, 30);
+        }
+    }
+
+    tick(); // 開始
+}
+
+
+
+function fadeOutAudio(audio, duration = 1000) {
+  const step = 50;
+  const volumeStep = audio.volume / (duration / step);
+
+  const fade = setInterval(() => {
+    if (audio.volume > 0.01) {
+      audio.volume -= volumeStep;
+    } else {
+      audio.volume = 0;
+      audio.pause();
+      audio.currentTime = 0;
+      clearInterval(fade);
+    }
+  }, step);
+}
+
+window.onload = () => {
+  const popup1 = document.getElementById("popup1");
+  const popup2 = document.getElementById("popup2");
+  const bgm = document.getElementById("bgm");
+  const ddn = document.getElementById("ddn");
+  const titlebgm = document.getElementById("titlebgm");
+  const startBtn = document.getElementById("startBtn");
+  // timeup popup buttons
+const timeupRetryBtn = document.getElementById("timeupRetry");
+const timeupCloseBtn = document.getElementById("timeupClose");
+if (timeupRetryBtn) timeupRetryBtn.addEventListener("click", () => {
+  // シンプルにリセットして再スタートさせる処理例
+  ddn.play();
+  state.token = {kind:'normal', level:1};
+  state.holder = 'player';
+  state.turn = 0;
+  state.mode = 'idle';
+  pendingAction = null;
+  currentSelection = [];
+  currentExpected = null;
+  el.log.innerHTML = '';
+  el.lastAction.textContent = '—';
+  // hide popup
+  document.getElementById("timeupPopup").style.display = "none";
+  render();
+  log('リトライ: ゲームをリセットしました。あなたからスタートです。');
+});
+
+if (timeupCloseBtn) timeupCloseBtn.addEventListener("click", () => {
+  // ただ閉じるだけ（結果画面に留める等、好きに変更してOK）
+  pp.play();
+  document.getElementById("timeupPopup").style.display = "none";
+});
+
+  const closePopup2 = document.getElementById("closePopup2");
+
+  // 2つ目 popup2 の OK が押されたとき
+  closePopup2.addEventListener("click", () => {
+    pp.play();
+    titlebgm.volume = 0.3;  // 音量
+    titlebgm.loop = true;
+    titlebgm.play();
+    popup2.style.display = "none";   // popup2 を閉じる
+  });
+
+  // 1つ目 popup1 の対局開始
   startBtn.addEventListener("click", () => {
-    // BGM再生（ユーザー操作必須）
+    ddn.play();
+    bgm.volume = 0.3;  // 音量
     bgm.loop = true;
     bgm.play();
-    bgm.volume = 0.2;
-    // ポップアップを消す
-    popup.style.display = "none";
+    chin.volume = 0;     // 無音で
+    chin.play();
+    chin.pause();
+    chin.currentTime = 0;
+    chin.volume = 1; // 元の音量に戻す
+    si.volume = 0;     // 無音で
+    si.play();
+    si.pause();
+    si.currentTime = 0;
+    si.volume = 1; // 元の音量に戻す
+      state.token = {kind:'normal', level:1};
+  state.holder = 'player';
+  state.turn = 0;
+  state.mode = 'idle';
+  pendingAction = null;
+  currentSelection = [];
+  currentExpected = null;
+  el.log.innerHTML = '';
+  el.lastAction.textContent = '—';
+  document.getElementById("timeupPopup").style.display = "none";
+  render();
+
+    fadeOutAudio(titlebgm, 1000);
+
+    popup1.style.display = "none";   // popup1 を閉じる
   });
 };
+
 
 
 const IMG_BASE = "https://b8ihua.github.io/okintama/";
@@ -270,62 +544,11 @@ function log(msg){
 
 function tokenDisplayName(t){
   if(t.kind === 'grip') return '握りお金玉';
-  if(t.kind === 'baked') return `${LEVEL_WORDS[t.level]}（焼きん玉）`;
+  if(t.kind === 'baked') return `${LEVEL_WORDS[t.level]}焼きん玉`;
   return `${LEVEL_WORDS[t.level]}${t.level===1 ? '' : 'お金玉'}`.replace('1','');
 }
 
-function render(){
-  const t = state.token;
-  el.holder.textContent = state.holder === 'player' ? 'あなたのターン' : 'Botのターン';
-  el.turn.textContent = state.turn;
-  el.stateShort.textContent = (t.kind === 'grip' ? '握りお金玉' : t.kind === 'baked' ? LEVEL_WORDS[t.level]+'（焼きん玉）' : LEVEL_WORDS[t.level] + (t.level===1 ? '（お金玉）' : '（お金玉）'));
-  // visual classes
-  el.visual.className = 'tokenVisual';
 
-// 画像切替
-const img = document.getElementById("tokenImg");
-if (t.kind === "grip") {
-  img.src = TOKEN_IMAGES.grip;
-} else if (t.kind === "baked") {
-  img.src = TOKEN_IMAGES.baked[t.level];
-} else {
-  img.src = TOKEN_IMAGES.normal[t.level];
-}
-
-// トークン位置（ターンによる上下移動）
-if(state.holder === 'player'){
-  el.visual.classList.add('tokenPlayerTurn');
-} else {
-  el.visual.classList.add('tokenBotTurn');
-}
-  let levelIndex = (t.kind === 'grip') ? 0 : t.level;
-  el.visual.classList.add('level' + levelIndex);
-  if(t.kind === 'baked') el.visual.classList.add('baked');
-
-
-  
-  el.stateText.textContent = (t.kind==='grip') ? '握りお金玉（Lv0）' : (t.kind==='baked') ? `${LEVEL_WORDS[t.level]} 焼きん玉（Lv${t.level}）` : `${LEVEL_WORDS[t.level]}（Lv${t.level}）`;
-  el.desc.textContent = `種別: ${t.kind} ／ レベル: ${t.level}`;
-  // operation buttons enabled only when player's turn and idle
-  const playerTurn = state.holder === 'player' && state.mode === 'idle';
-  el.btn_su.disabled = !playerTurn || !legalMoves(state.token).includes('su');
-  el.btn_kyu.disabled = !playerTurn || !legalMoves(state.token).includes('kyu');
-  el.btn_gyu.disabled = !playerTurn || !legalMoves(state.token).includes('gyu');
-  el.btn_ju.disabled = !playerTurn || !legalMoves(state.token).includes('ju');
-  // naming area visibility
-  if(state.mode === 'awaitNaming'){
-    el.operationArea.style.display = 'none';
-    el.namingArea.style.display = 'block';
-  } else {
-    el.operationArea.style.display = 'flex';
-    el.namingArea.style.display = 'none';
-    el.selectedWords.textContent = '—';
-  }
-  if(state.mode === 'gameover'){
-    el.operationArea.style.display = 'none';
-    el.namingArea.style.display = 'none';
-  }
-}
 
 function playSE(id) {
   const se = document.getElementById(id);
@@ -426,12 +649,24 @@ function onOperationClick(actionKey){
   state.mode = 'awaitNaming';
   render();
   buildWordButtons();
+
   log(`あなたが「${actionLabel(actionKey)}」を選択しました。名前を選んでください（必要語数: ${expected.length}）。`);
   // If expected length is 0 (shouldn't happen), auto commit
   if(expected.length === 0){
     commitPendingAction();
   }
 }
+
+function showGameOverModal(message) {
+    const m = document.getElementById("gameOverModal");
+    const msg = document.getElementById("gameOverMessage");
+    msg.textContent = message;
+    m.style.display = "block";
+}
+document.getElementById("gameOverClose").addEventListener("click", () => {
+    location.reload(); // そのままリロード OR モーダルを閉じるだけでもOK
+});
+
 
 function onWordClick(word, btnElement){
   playSE(`se_${word}`);
@@ -447,11 +682,17 @@ function onWordClick(word, btnElement){
     log(`不正解：選択 "${currentSelection.join(' → ')}" は期待 "${currentExpected.join(' → ')}" と一致しません。ゲーム終了。`);
     state.mode = 'gameover';
     render();
-    alert('ゲームオーバー お金玉の扱いは優しく正しく美しく');
+    showGameOverModal("");
+        si.play();
+    clearTimeout(turnTimer);
     return;
   }
   // if reached expected length -> correct
   if(currentSelection.length === currentExpected.length){
+    clearTimeout(turnTimer);  // ★ 正解時のみタイマー停止 ★
+    // ★ 残り時間バーを満タンに戻す
+    const bar = document.getElementById("timeBar");
+    if (bar) bar.style.width = "100%";
     // success: commit pending action
     log(`正解！「${currentSelection.join(' → ')}」が正しい名称です。Bot のターンへ。`);
     commitPendingAction();
@@ -474,6 +715,14 @@ function commitPendingAction(){
   currentExpected = null;
   state.mode = 'idle';
   render();
+
+   if(state.holder === 'player'){
+        startTurnTimer();
+    } else {
+        clearTimeout(turnTimer);
+        setTimeout(botMove, 1500);
+    }
+
   // bot move if it's bot's turn
   if(state.holder === 'bot') {
     setTimeout(botMove, 1500);
@@ -593,5 +842,10 @@ log('ゲーム開始 — あなたからスタートです。操作を選んで�
 <audio id="se_ウルトラ" src="https://b8ihua.github.io/okintama/ウルトラ.wav"></audio>
 <audio id="se_握り" src="https://b8ihua.github.io/okintama/にぎり.wav"></audio>
 <audio id="bgm" autoplay loop src="https://b8ihua.github.io/okintama/bgm.mp3"></audio>
+<audio id="titlebgm" autoplay loop src="https://b8ihua.github.io/okintama/title.mp3"></audio>
+<audio id="ddn" src="https://b8ihua.github.io/okintama/ddn.mp3"></audio>
+<audio id="pp" src="https://b8ihua.github.io/okintama/pp.mp3"></audio>
+<audio id="chin" src="https://b8ihua.github.io/okintama/chin.mp3"></audio>
+<audio id="si" src="https://b8ihua.github.io/okintama/si.mp3"></audio>
 </body>
 </html>

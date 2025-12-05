@@ -227,7 +227,7 @@
 <!-- 時間切れモーダル（最初は非表示） -->
 <div id="timeupPopup" class="popup" style="display:none; z-index:8000;">
   <div class="popup-content timeup-box" style="background:white; width:320px; height:auto; border-radius:10px; padding:18px; box-sizing:border-box;">
-    <h2 style="margin:0 0 8px;">時間切れ</h2>
+    <h2 style="margin:0 0 8px;">壊死</h2>
     <p style="margin:0 0 12px;">あまりに遅いので<br>お金玉は腐りました。</p>
     <div style="display:flex; gap:8px; justify-content:center;">
       <button id="timeupRetry" style="padding:8px 12px; border-radius:8px;">リトライ</button>
@@ -329,7 +329,7 @@ el.stateText.textContent = tokenDisplayName(t);
 }
 }
 let turnTimer = null;
-const TURN_LIMIT = 10000;  // 10秒
+const TURN_LIMIT = 5500;  // 5秒
 
 
 function startTurnTimer() {

@@ -15,15 +15,9 @@
   .flex{display:flex;gap:0px;align-items:flex-start}
   .panel{flex:1;padding:14px;border-radius:0px;background:#fff;border:1px solid #eef2fb}
   .side{width:280px}
-  .tokenVisual{width:120px;height:120px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;margin-right:12px}
+  .tokenVisual{width:120px;height:120px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;margin-right:0px}
   .row{display:flex;align-items:center;flex-direction: column;text-align:center;}
-  .level0{background:#dfe6df;border:3px solid #c5d6bf}
-  .level1{background:#fff7e6;border:3px solid #ffd67a}
-  .level2{background:#e6f7ff;border:3px solid #9fe0ff}
-  .level3{background:#f0e6ff;border:3px solid #caa7ff}
-  .level4{background:#ffeef6;border:3px solid #ffb7dd}
-  .level5{background:#fff0e6;border:3px solid #ffb87a}
-  .baked{box-shadow:0 0 0 6px rgba(255,0,0,0.03) inset}
+
   .controls{margin-top:12px;display:flex;gap:8px; }
   button{padding:10px 12px;border-radius:8px;border:1px solid #d0d7e6;background:#fff;cursor:pointer}
   button:disabled{opacity:0.45;cursor:not-allowed}
@@ -92,8 +86,10 @@
 
 <img src="https://b8ihua.github.io/okintama/無題1472_20251205142450.png" width="100%" style="position: relative; top:240px; z-index:1;">
 
-        <div id="visual" class="tokenVisual level1" style="margin-top:-50px;">お金玉</div>
-        <div style="margin-top:50px; z-index:10;">
+        <div id="visual" class="tokenVisual level1">
+  <img id="tokenImg" src="" style="width:100%; height:100%; object-fit:contain; margin-top:-100px;">
+</div>
+        <div style="margin-top:10px; z-index:10;">
           <div><strong id="holder">プレイヤー</strong></div>
           <div id="stateText" class="status">お金玉（レベル1）</div>
           <div id="desc" >説明がここに表示されます。</div>
@@ -149,6 +145,26 @@
 </div>
 <div class="log" id="log"></div>
 <script>
+
+const IMG_BASE = "https://b8ihua.github.io/okintama/";
+
+const TOKEN_IMAGES = {
+  grip: IMG_BASE + "grip.PNG",
+  normal: {
+    1: IMG_BASE + "n1.PNG",
+    2: IMG_BASE + "n2.PNG",
+    3: IMG_BASE + "n3.PNG",
+    4: IMG_BASE + "n4.PNG",
+    5: IMG_BASE + "n5.PNG"
+  },
+  baked: {
+    2: IMG_BASE + "b2.PNG",
+    3: IMG_BASE + "b3.PNG",
+    4: IMG_BASE + "b4.PNG",
+    5: IMG_BASE + "b5.PNG"
+  }
+};
+
 /* 状態管理とルール（前回の合意仕様に準拠）
 state.token: { kind: 'normal'|'grip'|'baked', level: 0..5 }
 level names: 0:握り,1:お金玉,2:スーパー,3:ハイパー,4:エキストラ,5:ウルトラ
@@ -208,6 +224,17 @@ function render(){
   el.stateShort.textContent = (t.kind === 'grip' ? '握りお金玉' : t.kind === 'baked' ? LEVEL_WORDS[t.level]+'（焼きん玉）' : LEVEL_WORDS[t.level] + (t.level===1 ? '（お金玉）' : '（お金玉）'));
   // visual classes
   el.visual.className = 'tokenVisual';
+
+// 画像切替
+const img = document.getElementById("tokenImg");
+if (t.kind === "grip") {
+  img.src = TOKEN_IMAGES.grip;
+} else if (t.kind === "baked") {
+  img.src = TOKEN_IMAGES.baked[t.level];
+} else {
+  img.src = TOKEN_IMAGES.normal[t.level];
+}
+
 // トークン位置（ターンによる上下移動）
 if(state.holder === 'player'){
   el.visual.classList.add('tokenPlayerTurn');
@@ -217,7 +244,9 @@ if(state.holder === 'player'){
   let levelIndex = (t.kind === 'grip') ? 0 : t.level;
   el.visual.classList.add('level' + levelIndex);
   if(t.kind === 'baked') el.visual.classList.add('baked');
-  el.visual.textContent = (t.kind==='grip') ? '握りお金玉' : (t.kind==='baked' ? LEVEL_WORDS[t.level]+' 焼き' : LEVEL_WORDS[t.level] + (t.level===1 ? '': 'お金玉'));
+
+
+  
   el.stateText.textContent = (t.kind==='grip') ? '握りお金玉（Lv0）' : (t.kind==='baked') ? `${LEVEL_WORDS[t.level]} 焼きん玉（Lv${t.level}）` : `${LEVEL_WORDS[t.level]}（Lv${t.level}）`;
   el.desc.textContent = `種別: ${t.kind} ／ レベル: ${t.level}`;
   // operation buttons enabled only when player's turn and idle
@@ -380,7 +409,7 @@ function commitPendingAction(){
   render();
   // bot move if it's bot's turn
   if(state.holder === 'bot') {
-    setTimeout(botMove, 1000);
+    setTimeout(botMove, 1500);
   }
 }
 
